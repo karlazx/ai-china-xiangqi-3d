@@ -85,3 +85,89 @@
             transform: scale(0.96);
         }
 
+        .m3-btn.active {
+            background: linear-gradient(135deg, #efd59e 0%, #dfc07f 100%);
+            color: #2b1d09;
+            border: 1px solid rgba(163, 118, 42, 0.65);
+            box-shadow: 0 2px 8px rgba(180, 134, 45, 0.25);
+        }
+
+        .m3-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        @keyframes checkPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(217, 45, 32, 0.55); }
+            50% { box-shadow: 0 0 16px 4px rgba(217, 45, 32, 0.35); }
+        }
+
+        .check-alert {
+            animation: checkPulse 1.5s infinite;
+            border-color: #d92d20 !important;
+            background: rgba(254, 228, 226, 0.95) !important;
+            color: #912018 !important;
+        }
+
+        .calligraphy {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* Subtle warm framing vignette */
+        .cathedral-vignette {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: radial-gradient(circle at center, transparent 64%, rgba(20, 14, 8, 0.42) 100%);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Subtle Warm Vignette -->
+    <div class="cathedral-vignette"></div>
+
+    <!-- Single-Level Material Design 3 Navigation Bar -->
+    <header class="fixed top-3 left-1/2 -translate-x-1/2 z-20 w-[96vw] max-w-6xl pointer-events-none">
+        <nav aria-label="主控制栏" class="m3-bar pointer-events-auto rounded-full px-3.5 py-2 sm:px-5 sm:py-2.5 flex flex-wrap items-center justify-between gap-2">
+            
+            <!-- Left: Brand & Dynamic Turn/Check Status Pill -->
+            <div class="flex items-center gap-2.5">
+                <div class="hidden md:flex items-center gap-2 pl-1 pr-3 border-r border-amber-900/15">
+                    <span class="material-symbols-rounded text-[#9c6b19] text-xl">church</span>
+                    <span class="calligraphy font-black tracking-wider text-sm text-[#382711]">圣光大教堂 · 象棋</span>
+                </div>
+
+                <!-- Turn & Game Status Indicator Pill -->
+                <div id="status-pill" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f3e7d0]/90 border border-amber-800/20 transition-all duration-300">
+                    <span id="turn-dot" class="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#dc2626] transition-colors duration-300"></span>
+                    <span id="status-text" class="text-xs sm:text-sm font-bold tracking-wide text-[#2d2010] whitespace-nowrap">红方行棋 (玫瑰白玉)</span>
+                    <span id="captured-summary" class="hidden lg:inline-block text-[11px] font-semibold text-amber-900/70 pl-2 border-l border-amber-900/15">红 16 · 黑 16</span>
+                </div>
+            </div>
+
+            <!-- Right: All Direct Single-Level Action Controls -->
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+                
+                <!-- Mode Toggle: Player vs AI / 2P Pass & Play -->
+                <button id="btn-mode" class="m3-btn active px-3.5 py-1.5 text-xs sm:text-sm" title="切换人机对战或双人同屏模式">
+                    <span id="icon-mode" class="material-symbols-rounded text-[18px]">smart_toy</span>
+                    <span id="label-mode">人机对战 (AI)</span>
+                </button>
+
+                <!-- Camera Preset Cycle: Sanctuary Isometric / Top-Down / Grand Panorama -->
+                <button id="btn-camera" class="m3-btn px-3.5 py-1.5 text-xs sm:text-sm" title="切换视角：圣坛斜视 / 垂直俯视 / 圣殿全景">
+                    <span class="material-symbols-rounded text-[18px]">videocam</span>
+                    <span id="label-camera" class="hidden sm:inline">圣坛斜视</span>
+                </button>
+
+                <!-- Undo Move -->
+                <button id="btn-undo" class="m3-btn px-3 py-1.5 text-xs sm:text-sm" disabled title="悔棋">
+                    <span class="material-symbols-rounded text-[18px]">undo</span>
+                    <span class="hidden sm:inline">悔棋</span>
+                </button>
+
