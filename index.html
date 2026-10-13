@@ -520,3 +520,92 @@
                             if (p.color === RED) rGeneral = { r, c };
                             else bGeneral = { r, c };
                         }
+                    }
+                }
+                if (!rGeneral || !bGeneral || rGeneral.c !== bGeneral.c) return false;
+                const col = rGeneral.c;
+                for (let r = bGeneral.r + 1; r < rGeneral.r; r++) {
+                    if (board[r][col] !== null) return false;
+                }
+                return true;
+            }
+
+            isInCheck(color, board = this.board) {
+                if (this.generalsFacing(board)) return true;
+
+                let kingPos = null;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = board[r][c];
+                        if (p && p.color === color && p.type === 'K') {
+                            kingPos = { r, c };
+                            break;
+                        }
+                    }
+                    if (kingPos) break;
+                }
+                if (!kingPos) return true;
+
+                const enemy = color === RED ? BLACK : RED;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = board[r][c];
+                        if (p && p.color === enemy) {
+                            const moves = this.getPseudoMoves(r, c, board);
+                            for (const m of moves) {
+                                if (m.toR === kingPos.r && m.toC === kingPos.c) return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            getLegalMovesForPiece(r, c) {
+                const piece = this.board[r][c];
+                if (!piece) return [];
+                const pseudo = this.getPseudoMoves(r, c, this.board);
+                const legal = [];
+
+                for (const m of pseudo) {
+                    const savedTarget = this.board[m.toR][m.toC];
+                    this.board[m.toR][m.toC] = piece;
+                    this.board[m.fromR][m.fromC] = null;
+
+                    const inCheck = this.isInCheck(piece.color, this.board);
+
+                    this.board[m.fromR][m.fromC] = piece;
+                    this.board[m.toR][m.toC] = savedTarget;
+
+                    if (!inCheck) legal.push(m);
+                }
+                return legal;
+            }
+
+            getAllLegalMoves(color) {
+                const all = [];
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = this.board[r][c];
+                        if (p && p.color === color) {
+                            all.push(...this.getLegalMovesForPiece(r, c));
+                        }
+                    }
+                }
+                return all;
+            }
+
+            makeMove(move) {
+                const piece = this.board[move.fromR][move.fromC];
+                const captured = this.board[move.toR][move.toC];
+
+                this.history.push({
+                    fromR: move.fromR,
+                    fromC: move.fromC,
+                    toR: move.toR,
+                    toC: move.toC,
+                    piece,
+                    captured,
+                    prevTurn: this.turn
+                });
+
