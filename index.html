@@ -433,3 +433,90 @@
                         const nr = r + dr, nc = c + dc;
                         if (this.inPalace(nr, nc, color)) addIfValid(nr, nc);
                     }
+                } else if (type === 'A') {
+                    const dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        if (this.inPalace(nr, nc, color)) addIfValid(nr, nc);
+                    }
+                } else if (type === 'E') {
+                    const dirs = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        const eyeR = r + dr / 2, eyeC = c + dc / 2;
+                        if (!this.inBounds(nr, nc)) continue;
+                        if (color === RED && nr < 5) continue;
+                        if (color === BLACK && nr > 4) continue;
+                        if (board[eyeR][eyeC] === null) addIfValid(nr, nc);
+                    }
+                } else if (type === 'H') {
+                    const jumps = [
+                        { leg: [-1, 0], to: [-2, -1] }, { leg: [-1, 0], to: [-2, 1] },
+                        { leg: [1, 0],  to: [2, -1] },  { leg: [1, 0],  to: [2, 1] },
+                        { leg: [0, -1], to: [-1, -2] }, { leg: [0, -1], to: [1, -2] },
+                        { leg: [0, 1],  to: [-1, 2] },  { leg: [0, 1],  to: [1, 2] }
+                    ];
+                    for (const j of jumps) {
+                        const legR = r + j.leg[0], legC = c + j.leg[1];
+                        const nr = r + j.to[0], nc = c + j.to[1];
+                        if (this.inBounds(nr, nc) && board[legR][legC] === null) {
+                            addIfValid(nr, nc);
+                        }
+                    }
+                } else if (type === 'R') {
+                    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                    for (const [dr, dc] of dirs) {
+                        let nr = r + dr, nc = c + dc;
+                        while (this.inBounds(nr, nc)) {
+                            if (!addIfValid(nr, nc)) break;
+                            nr += dr;
+                            nc += dc;
+                        }
+                    }
+                } else if (type === 'C') {
+                    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                    for (const [dr, dc] of dirs) {
+                        let nr = r + dr, nc = c + dc;
+                        let jumped = false;
+                        while (this.inBounds(nr, nc)) {
+                            const target = board[nr][nc];
+                            if (!jumped) {
+                                if (!target) {
+                                    moves.push({ fromR: r, fromC: c, toR: nr, toC: nc, captured: null });
+                                } else {
+                                    jumped = true;
+                                }
+                            } else {
+                                if (target) {
+                                    if (target.color !== color) {
+                                        moves.push({ fromR: r, fromC: c, toR: nr, toC: nc, captured: target });
+                                    }
+                                    break;
+                                }
+                            }
+                            nr += dr;
+                            nc += dc;
+                        }
+                    }
+                } else if (type === 'P') {
+                    const forward = color === RED ? -1 : 1;
+                    addIfValid(r + forward, c);
+                    const crossedRiver = color === RED ? (r <= 4) : (r >= 5);
+                    if (crossedRiver) {
+                        addIfValid(r, c - 1);
+                        addIfValid(r, c + 1);
+                    }
+                }
+
+                return moves;
+            }
+
+            generalsFacing(board) {
+                let rGeneral = null, bGeneral = null;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 3; c <= 5; c++) {
+                        const p = board[r][c];
+                        if (p && p.type === 'K') {
+                            if (p.color === RED) rGeneral = { r, c };
+                            else bGeneral = { r, c };
+                        }
