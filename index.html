@@ -344,3 +344,92 @@
                     gain.gain.setValueAtTime(0.16, now + i * 0.11);
                     gain.gain.exponentialRampToValueAtTime(0.0008, now + i * 0.11 + 1.7);
 
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.11);
+                    osc.stop(now + i * 0.11 + 1.75);
+                });
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        /**************************************************************************
+         * 2. COMPLETE XIANGQI (CHINESE CHESS) RULES ENGINE & ALPHA-BETA AI
+         **************************************************************************/
+        const RED = 'r';
+        const BLACK = 'b';
+
+        const PIECE_INFO = {
+            K: { rName: '帥', bName: '將', value: 10000 },
+            A: { rName: '仕', bName: '士', value: 130   },
+            E: { rName: '相', bName: '象', value: 130   },
+            R: { rName: '俥', bName: '車', value: 600   },
+            H: { rName: '傌', bName: '馬', value: 290   },
+            C: { rName: '炮', bName: '砲', value: 300   },
+            P: { rName: '兵', bName: '卒', value: 80    }
+        };
+
+        class XiangqiEngine {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.board = Array.from({ length: 10 }, () => Array(9).fill(null));
+                this.turn = RED;
+                this.history = [];
+                this.gameOver = false;
+                this.winner = null;
+
+                const setupRow = (row, color, types) => {
+                    types.forEach((type, col) => {
+                        if (type) {
+                            this.board[row][col] = {
+                                id: `${color}_${type}_${row}_${col}_${Math.random().toString(36).slice(2, 6)}`,
+                                type,
+                                color
+                            };
+                        }
+                    });
+                };
+
+                setupRow(0, BLACK, ['R', 'H', 'E', 'A', 'K', 'A', 'E', 'H', 'R']);
+                setupRow(2, BLACK, [null, 'C', null, null, null, null, null, 'C', null]);
+                setupRow(3, BLACK, ['P', null, 'P', null, 'P', null, 'P', null, 'P']);
+
+                setupRow(6, RED, ['P', null, 'P', null, 'P', null, 'P', null, 'P']);
+                setupRow(7, RED, [null, 'C', null, null, null, null, null, 'C', null]);
+                setupRow(9, RED, ['R', 'H', 'E', 'A', 'K', 'A', 'E', 'H', 'R']);
+            }
+
+            inBounds(r, c) {
+                return r >= 0 && r < 10 && c >= 0 && c < 9;
+            }
+
+            inPalace(r, c, color) {
+                if (c < 3 || c > 5) return false;
+                return color === RED ? (r >= 7 && r <= 9) : (r >= 0 && r <= 2);
+            }
+
+            getPseudoMoves(r, c, board = this.board) {
+                const piece = board[r][c];
+                if (!piece) return [];
+                const { type, color } = piece;
+                const moves = [];
+
+                const addIfValid = (nr, nc) => {
+                    if (!this.inBounds(nr, nc)) return false;
+                    const target = board[nr][nc];
+                    if (!target || target.color !== color) {
+                        moves.push({ fromR: r, fromC: c, toR: nr, toC: nc, captured: target });
+                    }
+                    return !target;
+                };
+
+                if (type === 'K') {
+                    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        if (this.inPalace(nr, nc, color)) addIfValid(nr, nc);
+                    }
