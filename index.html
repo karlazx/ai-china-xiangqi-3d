@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>圣光大教堂 · 3D 中国象棋</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Serif SC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Material Symbols Rounded -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --md-surface: rgba(250, 244, 232, 0.88);
+            --md-border: rgba(180, 138, 68, 0.38);
+            --md-text-primary: #2d2215;
+            --md-gold-accent: #b8862d;
+        }
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #241c14;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--md-text-primary);
+        }
+
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Material Design 3 Warm Ivory & Gold Glassmorphic Bar */
+        .m3-bar {
+            background: var(--md-surface);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            border: 1px solid var(--md-border);
+            box-shadow: 0 10px 32px -4px rgba(28, 19, 8, 0.38), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+        }
+
+        .m3-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: #4a3720;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(180, 138, 68, 0.24);
+        }
+
+        .m3-btn:hover:not(:disabled) {
+            background: rgba(235, 214, 172, 0.65);
+            color: #23180b;
+            border-color: rgba(180, 138, 68, 0.5);
+        }
+
+        .m3-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
