@@ -1469,3 +1469,92 @@
                     metalness: 0.1
                 });
 
+                const brassMat = new THREE.MeshStandardMaterial({
+                    color: 0xc8963e,
+                    roughness: 0.26,
+                    metalness: 0.84,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -1,
+                    polygonOffsetUnits: -1
+                });
+
+                const altarGroup = new THREE.Group();
+
+                // Step 1 (Bottom): Y from -2.45 to -1.95
+                const step1 = new THREE.Mesh(new THREE.BoxGeometry(19.5, 0.5, 20.5), redVeronaMat);
+                step1.position.y = -2.20;
+                step1.receiveShadow = true;
+                altarGroup.add(step1);
+
+                // Step 2 (Middle): Y from -1.95 to -1.45
+                const step2 = new THREE.Mesh(new THREE.BoxGeometry(17.2, 0.5, 18.2), creamMarbleMat);
+                step2.position.y = -1.70;
+                step2.receiveShadow = true;
+                altarGroup.add(step2);
+
+                // Altar Pedestal Body: Y from -1.45 to -0.45
+                const pedestal = new THREE.Mesh(new THREE.BoxGeometry(12.2, 1.0, 13.2), creamMarbleMat);
+                pedestal.position.y = -0.95;
+                pedestal.castShadow = true;
+                pedestal.receiveShadow = true;
+                altarGroup.add(pedestal);
+
+                // Golden Arcade Colonnettes around Altar Pedestal
+                for (let i = -4; i <= 4; i += 2) {
+                    [-6.65, 6.65].forEach((z) => {
+                        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.96, 12), brassMat);
+                        col.position.set(i * 1.2, -0.95, z);
+                        altarGroup.add(col);
+                    });
+                }
+
+                // Altar Mensa (Top Slab): Y from -0.45 to 0.00 (Top surface at Y = 0.00)
+                const mensa = new THREE.Mesh(new THREE.BoxGeometry(14.4, 0.45, 15.4), redVeronaMat);
+                mensa.position.y = -0.225;
+                mensa.receiveShadow = true;
+                mensa.castShadow = true;
+                altarGroup.add(mensa);
+
+                // Brass Outer Rim Band around Mensa (Y centered at -0.18, non-overlapping with top)
+                const mensaTrim = new THREE.Mesh(new THREE.BoxGeometry(14.56, 0.18, 15.56), brassMat);
+                mensaTrim.position.y = -0.18;
+                altarGroup.add(mensaTrim);
+
+                this.scene.add(altarGroup);
+
+                // Xiangqi Board: Bottom at Y = 0.02, Top at Y = 0.35 (Height = 0.33)
+                const boardWidth = this.cellSize * 8 + 2.3;  // 11.5
+                const boardDepth = this.cellSize * 9 + 2.3;  // 12.65
+                const boardHeight = 0.33;
+
+                const boardTopTex = createXiangqiBoardTexture();
+                const boardSideMat = new THREE.MeshStandardMaterial({
+                    color: 0x5c3c1e,
+                    roughness: 0.45,
+                    metalness: 0.35
+                });
+                const boardTopMat = new THREE.MeshStandardMaterial({
+                    map: boardTopTex,
+                    roughness: 0.38,
+                    metalness: 0.12
+                });
+
+                this.boardMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(boardWidth, boardHeight, boardDepth),
+                    [boardSideMat, boardSideMat, boardTopMat, boardSideMat, boardSideMat, boardSideMat]
+                );
+                this.boardMesh.position.y = 0.02 + boardHeight / 2; // Top is exactly at Y = 0.35
+                this.boardMesh.receiveShadow = true;
+                this.boardMesh.castShadow = true;
+                this.scene.add(this.boardMesh);
+
+                // 4 Sanctuary Corner Candlesticks on the Altar Mensa (Y = 0.00)
+                const candleCoords = [
+                    [-6.3, -6.8], [6.3, -6.8],
+                    [-6.3, 6.8],  [6.3, 6.8]
+                ];
+
+                candleCoords.forEach(([cx, cz], idx) => {
+                    const cGroup = new THREE.Group();
+                    cGroup.position.set(cx, 0.0, cz);
+
