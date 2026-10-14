@@ -778,3 +778,90 @@
                 envScene.add(panel);
             });
 
+            const envMap = pmremGenerator.fromScene(envScene, 0.04).texture;
+            pmremGenerator.dispose();
+            return envMap;
+        }
+
+        // Warm Limestone / Travertine Texture for Cathedral Columns & Walls
+        function createWarmLimestoneTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#cbb899';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Ashlar masonry blocks
+            ctx.strokeStyle = 'rgba(92, 73, 48, 0.28)';
+            ctx.lineWidth = 2;
+            const rowH = 64;
+            for (let y = 0; y < 512; y += rowH) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(512, y);
+                ctx.stroke();
+
+                const offset = (y / rowH) % 2 === 0 ? 0 : 64;
+                for (let x = offset; x < 512; x += 128) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, y + rowH);
+                    ctx.stroke();
+                }
+            }
+
+            // Travertine mineral grain
+            for (let i = 0; i < 6000; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255, 248, 232, 0.12)' : 'rgba(74, 56, 35, 0.12)';
+                ctx.fillRect(Math.random() * 512, Math.random() * 512, 3, 2);
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(2, 4);
+            return tex;
+        }
+
+        // Cathedral Marble Inlay Floor Texture (Rich Siena Gold, Rosso Verona & Warm Carrara)
+        function createCathedralFloorTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#cfc1ab';
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Checkerboard diamond inlay tiles
+            const step = 128;
+            for (let y = 0; y < 1024; y += step) {
+                for (let x = 0; x < 1024; x += step) {
+                    const isAlt = ((x / step) + (y / step)) % 2 === 0;
+                    ctx.fillStyle = isAlt ? '#d6c7b0' : '#b8a282';
+                    ctx.fillRect(x, y, step, step);
+                    ctx.strokeStyle = '#8c6d3f';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, step, step);
+                }
+            }
+
+            // Central Octagonal Compass Rose Medallion
+            const cx = 512, cy = 512;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, 360, 0, Math.PI * 2);
+            ctx.fillStyle = '#993d33'; // Rosso Verona marble ring
+            ctx.fill();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#b58938';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 310, 0, Math.PI * 2);
+            ctx.fillStyle = '#dfd3be';
+            ctx.fill();
+            ctx.stroke();
+
