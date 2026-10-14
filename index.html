@@ -1908,3 +1908,83 @@
                         life: 1.0
                     });
                 }
+            }
+
+            spawnShockwave(position, isRedAttacker) {
+                const ringGeo = new THREE.RingGeometry(0.2, 0.35, 36);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: isRedAttacker ? 0xdc2626 : 0x0284c7,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.92,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -3,
+                    polygonOffsetUnits: -3
+                });
+                const mesh = new THREE.Mesh(ringGeo, ringMat);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.set(position.x, this.boardY + 0.03, position.z);
+                this.scene.add(mesh);
+                this.shockwaves.push({ mesh, scale: 1.0, opacity: 0.92 });
+            }
+
+            // 28-Shard 3D Polyhedral Shatter Physics with Gravity & Board Bounce
+            shatterPiece(capturedPiece, worldPos) {
+                const mesh = this.pieceMeshes.get(capturedPiece.id);
+                if (mesh) {
+                    this.scene.remove(mesh);
+                    this.pieceMeshes.delete(capturedPiece.id);
+                }
+
+                const isRed = capturedPiece.color === RED;
+                const shardCount = 26;
+
+                for (let i = 0; i < shardCount; i++) {
+                    const radius = 0.068 + Math.random() * 0.085;
+                    const shardGeo = new THREE.DodecahedronGeometry(radius, 0);
+                    const posAttr = shardGeo.attributes.position;
+                    for (let v = 0; v < posAttr.count; v++) {
+                        posAttr.setXYZ(
+                            v,
+                            posAttr.getX(v) * (0.65 + Math.random() * 0.7),
+                            posAttr.getY(v) * (0.5 + Math.random() * 0.8),
+                            posAttr.getZ(v) * (0.65 + Math.random() * 0.7)
+                        );
+                    }
+                    shardGeo.computeVertexNormals();
+
+                    const isAccentShard = i % 4 === 0;
+                    const shardMat = new THREE.MeshStandardMaterial({
+                        color: isAccentShard
+                            ? (isRed ? 0xb91c1c : 0x38bdf8)
+                            : (isRed ? 0xd99b82 : 0x181c26),
+                        roughness: 0.25,
+                        metalness: isAccentShard ? 0.75 : 0.15,
+                        transparent: true,
+                        opacity: 1.0
+                    });
+
+                    const shard = new THREE.Mesh(shardGeo, shardMat);
+                    const angle = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+                    const dist = Math.random() * 0.28;
+                    shard.position.set(
+                        worldPos.x + Math.cos(angle) * dist,
+                        this.boardY + 0.14 + Math.random() * 0.18,
+                        worldPos.z + Math.sin(angle) * dist
+                    );
+                    shard.castShadow = true;
+                    this.scene.add(shard);
+
+                    const speed = 1.6 + Math.random() * 2.8;
+                    this.shatterFragments.push({
+                        mesh: shard,
+                        vx: Math.cos(angle) * speed,
+                        vy: 2.2 + Math.random() * 2.6,
+                        vz: Math.sin(angle) * speed,
+                        rx: (Math.random() - 0.5) * 14,
+                        ry: (Math.random() - 0.5) * 14,
+                        rz: (Math.random() - 0.5) * 14,
+                        life: 1.0
+                    });
+                }
+            }
