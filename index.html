@@ -2338,3 +2338,84 @@
                 } else {
                     statusPill.classList.remove('check-alert');
                 }
+
+                if (engine.turn === RED) {
+                    turnDot.className = 'w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#dc2626]';
+                    statusText.textContent = inCheck ? '红方被将军！(玫瑰白玉)' : '红方行棋 (玫瑰白玉)';
+                } else {
+                    turnDot.className = 'w-2.5 h-2.5 rounded-full bg-sky-500 shadow-[0_0_8px_#0ea5e9]';
+                    if (vsAI) {
+                        statusText.textContent = '黑方思考中... (AI)';
+                    } else {
+                        statusText.textContent = inCheck ? '黑方被将军！(黑曜石)' : '黑方行棋 (黑曜石)';
+                    }
+                }
+            }
+
+            function executeMove(move) {
+                isBusy = true;
+                scene3D.clearSelection();
+                selectedCoord = null;
+                currentLegalMoves = [];
+
+                const result = engine.makeMove(move);
+                updateStatusUI(result.inCheck);
+
+                scene3D.animateMove(move, result, () => {
+                    if (engine.gameOver) {
+                        isBusy = false;
+                        updateStatusUI(false);
+                        return;
+                    }
+
+                    if (vsAI && engine.turn === BLACK) {
+                        setTimeout(() => {
+                            const aiMove = engine.computeBestMove(3);
+                            if (aiMove) {
+                                const aiResult = engine.makeMove(aiMove);
+                                updateStatusUI(aiResult.inCheck);
+                                scene3D.animateMove(aiMove, aiResult, () => {
+                                    isBusy = false;
+                                    updateStatusUI(aiResult.inCheck);
+                                });
+                            } else {
+                                isBusy = false;
+                                updateStatusUI(false);
+                            }
+                        }, 180);
+                    } else {
+                        isBusy = false;
+                        updateStatusUI(result.inCheck);
+                    }
+                });
+            }
+
+            function handleSquareClick(r, c) {
+                if (isBusy || engine.gameOver) return;
+                if (vsAI && engine.turn === BLACK) return;
+
+                if (selectedCoord) {
+                    const chosenMove = currentLegalMoves.find(m => m.toR === r && m.toC === c);
+                    if (chosenMove) {
+                        executeMove(chosenMove);
+                        return;
+                    }
+                }
+
+                const clickedPiece = engine.board[r][c];
+                if (clickedPiece && clickedPiece.color === engine.turn) {
+                    selectedCoord = { r, c };
+                    currentLegalMoves = engine.getLegalMovesForPiece(r, c);
+                    scene3D.selectPiece(clickedPiece, currentLegalMoves);
+                } else {
+                    selectedCoord = null;
+                    currentLegalMoves = [];
+                    scene3D.clearSelection();
+                }
+            }
+
+            const scene3D = new CathedralXiangqiScene(container, engine, handleSquareClick);
+
+            btnMode.addEventListener('click', () => {
+                if (isBusy) return;
+                vsAI = !vsAI;
