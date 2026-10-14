@@ -609,3 +609,84 @@
                     prevTurn: this.turn
                 });
 
+                this.board[move.toR][move.toC] = piece;
+                this.board[move.fromR][move.fromC] = null;
+                this.turn = this.turn === RED ? BLACK : RED;
+
+                const nextMoves = this.getAllLegalMoves(this.turn);
+                const inCheck = this.isInCheck(this.turn);
+
+                if (nextMoves.length === 0) {
+                    this.gameOver = true;
+                    this.winner = this.turn === RED ? BLACK : RED;
+                }
+
+                return { piece, captured, inCheck, gameOver: this.gameOver, winner: this.winner };
+            }
+
+            undoLastMove() {
+                if (this.history.length === 0) return null;
+                const last = this.history.pop();
+                this.board[last.fromR][last.fromC] = last.piece;
+                this.board[last.toR][last.toC] = last.captured;
+                this.turn = last.prevTurn;
+                this.gameOver = false;
+                this.winner = null;
+                return last;
+            }
+
+            evaluateBoard() {
+                let score = 0;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = this.board[r][c];
+                        if (!p) continue;
+                        let val = PIECE_INFO[p.type].value;
+                        if (p.type === 'P') {
+                            if (p.color === BLACK && r >= 5) val += 55 + (c >= 2 && c <= 6 ? 20 : 0);
+                            if (p.color === RED && r <= 4) val += 55 + (c >= 2 && c <= 6 ? 20 : 0);
+                        } else if (p.type === 'H' || p.type === 'C' || p.type === 'R') {
+                            val += (4 - Math.abs(4 - c)) * 6;
+                        }
+                        score += (p.color === BLACK ? val : -val);
+                    }
+                }
+                return score;
+            }
+
+            computeBestMove(depth = 3) {
+                const legalMoves = this.getAllLegalMoves(BLACK);
+                if (legalMoves.length === 0) return null;
+
+                legalMoves.sort((a, b) => {
+                    const va = a.captured ? PIECE_INFO[a.captured.type].value : 0;
+                    const vb = b.captured ? PIECE_INFO[b.captured.type].value : 0;
+                    return vb - va;
+                });
+
+                let bestMove = legalMoves[0];
+                let bestScore = -Infinity;
+                let alpha = -Infinity;
+                let beta = Infinity;
+
+                for (const m of legalMoves) {
+                    const piece = this.board[m.fromR][m.fromC];
+                    const captured = this.board[m.toR][m.toC];
+
+                    this.board[m.toR][m.toC] = piece;
+                    this.board[m.fromR][m.fromC] = null;
+
+                    const score = this.alphaBeta(depth - 1, alpha, beta, false);
+
+                    this.board[m.fromR][m.fromC] = piece;
+                    this.board[m.toR][m.toC] = captured;
+
+                    const jitter = (Math.random() - 0.5) * 4;
+                    if (score + jitter > bestScore) {
+                        bestScore = score + jitter;
+                        bestMove = m;
+                    }
+                    alpha = Math.max(alpha, score);
+                }
+                return bestMove;
+            }
