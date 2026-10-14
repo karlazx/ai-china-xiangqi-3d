@@ -1727,3 +1727,91 @@
                         const crest = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.13, 4), goldTrimMat);
                         crest.position.set(side * 0.40, 0.05, -0.05);
                         crest.rotation.x = -0.35;
+                        crownGroup.add(crest);
+                    });
+                } else if (piece.type === 'C') {
+                    [-1, 1].forEach((side) => {
+                        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.12, 10), accentMat);
+                        barrel.position.set(side * 0.41, 0.03, 0);
+                        barrel.rotation.x = Math.PI / 4;
+                        crownGroup.add(barrel);
+                    });
+                } else if (piece.type === 'P') {
+                    for (let i = 0; i < 4; i++) {
+                        const a = (i / 4) * Math.PI * 2;
+                        const stud = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.065, 8), goldTrimMat);
+                        stud.position.set(Math.cos(a) * 0.41, 0.025, Math.sin(a) * 0.41);
+                        crownGroup.add(stud);
+                    }
+                }
+
+                group.add(crownGroup);
+                return group;
+            }
+
+            buildSelectionAndMoveHelpers() {
+                // Raised 0.025 above boardY + polygonOffset to guarantee zero flicker
+                const auraGeo = new THREE.RingGeometry(0.46, 0.56, 36);
+                const auraMat = new THREE.MeshBasicMaterial({
+                    color: 0xd97706,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.9,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -2,
+                    polygonOffsetUnits: -2
+                });
+                this.selectionAura = new THREE.Mesh(auraGeo, auraMat);
+                this.selectionAura.rotation.x = -Math.PI / 2;
+                this.selectionAura.visible = false;
+                this.scene.add(this.selectionAura);
+
+                const lastGeo = new THREE.RingGeometry(0.44, 0.51, 32);
+                const lastMat = new THREE.MeshBasicMaterial({
+                    color: 0x78350f,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.55,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -2,
+                    polygonOffsetUnits: -2
+                });
+                this.lastFromRing = new THREE.Mesh(lastGeo, lastMat);
+                this.lastFromRing.rotation.x = -Math.PI / 2;
+                this.lastFromRing.visible = false;
+                this.scene.add(this.lastFromRing);
+
+                this.lastToRing = new THREE.Mesh(lastGeo, lastMat);
+                this.lastToRing.rotation.x = -Math.PI / 2;
+                this.lastToRing.visible = false;
+                this.scene.add(this.lastToRing);
+
+                this.indicatorsGroup = new THREE.Group();
+                this.scene.add(this.indicatorsGroup);
+            }
+
+            syncPiecesFromBoard() {
+                const seenIds = new Set();
+
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = this.engine.board[r][c];
+                        if (!p) continue;
+                        seenIds.add(p.id);
+
+                        let mesh = this.pieceMeshes.get(p.id);
+                        if (!mesh) {
+                            mesh = this.createPieceMesh(p);
+                            this.scene.add(mesh);
+                            this.pieceMeshes.set(p.id, mesh);
+                        }
+                        const pos = this.boardToWorld(r, c);
+                        mesh.position.copy(pos);
+                        mesh.rotation.set(0, 0, 0);
+                        mesh.userData.r = r;
+                        mesh.userData.c = c;
+                        mesh.userData.baseY = pos.y;
+                        mesh.userData.phase = (r * 9 + c) * 0.45;
+                    }
+                }
+
