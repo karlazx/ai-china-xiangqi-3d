@@ -2257,3 +2257,84 @@
                         sw.mesh.material.dispose();
                         this.shockwaves.splice(i, 1);
                     }
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        /**************************************************************************
+         * 5. APPLICATION CONTROLLER & SINGLE-LEVEL MATERIAL DESIGN 3 UI
+         **************************************************************************/
+        window.onload = function () {
+            const engine = new XiangqiEngine();
+            const container = document.getElementById('canvas-container');
+
+            let vsAI = true;
+            let isBusy = false;
+            let selectedCoord = null;
+            let currentLegalMoves = [];
+            let toastTimeout = null;
+
+            const statusPill = document.getElementById('status-pill');
+            const turnDot = document.getElementById('turn-dot');
+            const statusText = document.getElementById('status-text');
+            const capturedSummary = document.getElementById('captured-summary');
+            const btnMode = document.getElementById('btn-mode');
+            const iconMode = document.getElementById('icon-mode');
+            const labelMode = document.getElementById('label-mode');
+            const btnCamera = document.getElementById('btn-camera');
+            const labelCamera = document.getElementById('label-camera');
+            const btnUndo = document.getElementById('btn-undo');
+            const btnNew = document.getElementById('btn-new');
+            const btnSound = document.getElementById('btn-sound');
+            const iconSound = document.getElementById('icon-sound');
+            const toastBanner = document.getElementById('toast-banner');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            function showToast(msg, icon = 'auto_awesome', duration = 2600) {
+                toastMessage.textContent = msg;
+                toastIcon.textContent = icon;
+                toastBanner.classList.remove('opacity-0', 'translate-y-4');
+                toastBanner.classList.add('opacity-100', 'translate-y-0');
+
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toastBanner.classList.remove('opacity-100', 'translate-y-0');
+                    toastBanner.classList.add('opacity-0', 'translate-y-4');
+                }, duration);
+            }
+
+            function updateStatusUI(inCheck = false) {
+                btnUndo.disabled = engine.history.length === 0 || isBusy;
+
+                let rCount = 0, bCount = 0;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const p = engine.board[r][c];
+                        if (p) {
+                            if (p.color === RED) rCount++;
+                            else bCount++;
+                        }
+                    }
+                }
+                capturedSummary.textContent = `红 ${rCount} · 黑 ${bCount}`;
+
+                if (engine.gameOver) {
+                    statusPill.classList.add('check-alert');
+                    const winText = engine.winner === RED ? '红方绝杀获胜！' : '黑方绝杀获胜！';
+                    statusText.textContent = winText;
+                    turnDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]';
+                    showToast(`圣殿终局 · ${winText}`, 'emoji_events', 5000);
+                    sound.playCathedralBell(true);
+                    return;
+                }
+
+                if (inCheck) {
+                    statusPill.classList.add('check-alert');
+                    sound.playCathedralBell(false);
+                    showToast('将军！(Check)', 'warning', 2400);
+                } else {
+                    statusPill.classList.remove('check-alert');
+                }
