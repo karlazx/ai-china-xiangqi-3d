@@ -1201,3 +1201,103 @@
             }
 
             initScene() {
+                this.scene = new THREE.Scene();
+                // Warm antique amber-stone backdrop & very light depth fog so distant walls are crisp and clear
+                this.scene.background = new THREE.Color(0x2c2217);
+                this.scene.fog = new THREE.FogExp2(0x2c2217, 0.0055);
+
+                // Near plane raised to 0.8 (from 0.1) to increase Z-buffer precision 8x and prevent panorama flickering!
+                this.camera = new THREE.PerspectiveCamera(
+                    40,
+                    window.innerWidth / window.innerHeight,
+                    0.8,
+                    140
+                );
+                this.camera.position.set(0, 12.2, 11.4);
+
+                this.renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    powerPreference: 'high-performance'
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                // Balanced exposure: never washes out the board or cathedral walls
+                this.renderer.toneMappingExposure = 0.92;
+                this.container.appendChild(this.renderer.domElement);
+
+                // Apply balanced procedural HDR environment map
+                this.scene.environment = createCathedralEnvMap(this.renderer);
+
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.06;
+                this.controls.target.set(0, 0.35, 0.35);
+                this.controls.minDistance = 6.5;
+                this.controls.maxDistance = 28;
+                this.controls.maxPolarAngle = Math.PI * 0.45;
+
+                // Carefully Balanced Cathedral Lighting (Warm golden sunlight + gentle vaulted bounce)
+                const hemiLight = new THREE.HemisphereLight(0xffe8c2, 0x4a3824, 0.65);
+                hemiLight.position.set(0, 28, 0);
+                this.scene.add(hemiLight);
+
+                // Main Sunlight streaming onto the Sanctuary Altar
+                const sunLight = new THREE.DirectionalLight(0xffdfad, 1.15);
+                sunLight.position.set(9, 22, 10);
+                sunLight.castShadow = true;
+                sunLight.shadow.mapSize.width = 2048;
+                sunLight.shadow.mapSize.height = 2048;
+                sunLight.shadow.camera.near = 2;
+                sunLight.shadow.camera.far = 55;
+                const d = 14;
+                sunLight.shadow.camera.left = -d;
+                sunLight.shadow.camera.right = d;
+                sunLight.shadow.camera.top = d;
+                sunLight.shadow.camera.bottom = -d;
+                sunLight.shadow.bias = -0.0006;
+                this.scene.add(sunLight);
+
+                // Soft stained-glass fill light from the North Rose Window
+                const apseFill = new THREE.DirectionalLight(0xe0a96d, 0.45);
+                apseFill.position.set(-10, 14, -18);
+                this.scene.add(apseFill);
+
+                window.addEventListener('resize', () => this.onWindowResize());
+            }
+
+            buildLuxuriousGothicCathedral() {
+                const limestoneTex = createWarmLimestoneTexture();
+                const limestoneMat = new THREE.MeshStandardMaterial({
+                    color: 0xd4c2a5,
+                    map: limestoneTex,
+                    roughness: 0.72,
+                    metalness: 0.08
+                });
+
+                const carvedStoneMat = new THREE.MeshStandardMaterial({
+                    color: 0xbba483,
+                    roughness: 0.65,
+                    metalness: 0.12
+                });
+
+                const goldLeafMat = new THREE.MeshStandardMaterial({
+                    color: 0xd4a346,
+                    roughness: 0.26,
+                    metalness: 0.86
+                });
+
+                const royalVaultMat = new THREE.MeshStandardMaterial({
+                    color: 0x1e325c, // Sainte-Chapelle royal ultramarine vault ceiling
+                    roughness: 0.6,
+                    metalness: 0.15
+                });
+
+                const redMarbleMat = new THREE.MeshStandardMaterial({
+                    color: 0x87322a, // Rosso Verona marble
+                    roughness: 0.35,
+                    metalness: 0.1
+                });
+
