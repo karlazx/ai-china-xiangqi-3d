@@ -690,3 +690,91 @@
                 }
                 return bestMove;
             }
+
+            alphaBeta(depth, alpha, beta, isMaximizing) {
+                if (depth === 0) return this.evaluateBoard();
+
+                const color = isMaximizing ? BLACK : RED;
+                const moves = this.getAllLegalMoves(color);
+                if (moves.length === 0) {
+                    return isMaximizing ? -99999 - depth * 100 : 99999 + depth * 100;
+                }
+
+                moves.sort((a, b) => {
+                    const va = a.captured ? PIECE_INFO[a.captured.type].value : 0;
+                    const vb = b.captured ? PIECE_INFO[b.captured.type].value : 0;
+                    return vb - va;
+                });
+
+                if (isMaximizing) {
+                    let maxEval = -Infinity;
+                    for (const m of moves) {
+                        const piece = this.board[m.fromR][m.fromC];
+                        const captured = this.board[m.toR][m.toC];
+                        this.board[m.toR][m.toC] = piece;
+                        this.board[m.fromR][m.fromC] = null;
+
+                        const evaluation = this.alphaBeta(depth - 1, alpha, beta, false);
+
+                        this.board[m.fromR][m.fromC] = piece;
+                        this.board[m.toR][m.toC] = captured;
+
+                        maxEval = Math.max(maxEval, evaluation);
+                        alpha = Math.max(alpha, evaluation);
+                        if (beta <= alpha) break;
+                    }
+                    return maxEval;
+                } else {
+                    let minEval = Infinity;
+                    for (const m of moves) {
+                        const piece = this.board[m.fromR][m.fromC];
+                        const captured = this.board[m.toR][m.toC];
+                        this.board[m.toR][m.toC] = piece;
+                        this.board[m.fromR][m.fromC] = null;
+
+                        const evaluation = this.alphaBeta(depth - 1, alpha, beta, true);
+
+                        this.board[m.fromR][m.fromC] = piece;
+                        this.board[m.toR][m.toC] = captured;
+
+                        minEval = Math.min(minEval, evaluation);
+                        beta = Math.min(beta, evaluation);
+                        if (beta <= alpha) break;
+                    }
+                    return minEval;
+                }
+            }
+        }
+
+        /**************************************************************************
+         * 3. PROCEDURAL TEXTURES (Balanced Contrast, Zero Overexposure)
+         **************************************************************************/
+
+        // Balanced Cathedral Environment Map for realistic metallic & clearcoat reflections without whiteout
+        function createCathedralEnvMap(renderer) {
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileCubemapShader();
+
+            const envScene = new THREE.Scene();
+            envScene.background = new THREE.Color(0x3a2e21);
+
+            // Warm vaulted ceiling glow
+            const topLight = new THREE.Mesh(
+                new THREE.SphereGeometry(20, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0x5c4730, side: THREE.BackSide })
+            );
+            envScene.add(topLight);
+
+            // Stained glass color accents for realistic specular highlights on marble & obsidian
+            const accentColors = [0xd99b3c, 0xc24136, 0x3b82f6, 0x10b981, 0xf59e0b];
+            accentColors.forEach((col, idx) => {
+                const a = (idx / accentColors.length) * Math.PI * 2;
+                const panel = new THREE.Mesh(
+                    new THREE.PlaneGeometry(6, 10),
+                    new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })
+                );
+                panel.position.set(Math.cos(a) * 14, 4, Math.sin(a) * 14);
+                panel.lookAt(0, 0, 0);
+                envScene.add(panel);
+            });
+
