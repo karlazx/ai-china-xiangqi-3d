@@ -2173,3 +2173,87 @@
                             anim.mesh.position.set(midX, this.boardY + (1 - easeOut) * 1.15, midZ);
                             anim.mesh.rotation.x = (1 - easeOut) * 0.25;
 
+                            if (!anim.shattered && p >= 0.35) {
+                                anim.shattered = true;
+                                this.spawnShockwave(anim.endPos, anim.piece.color === RED);
+                                this.spawnDustParticles(anim.endPos, 14, 0xd4a346);
+                                this.shatterPiece(anim.captured, anim.endPos);
+                            }
+                        }
+                    }
+
+                    if (t >= 1) {
+                        anim.mesh.position.copy(anim.endPos);
+                        anim.mesh.rotation.set(0, 0, 0);
+                        anim.mesh.userData.r = anim.toR;
+                        anim.mesh.userData.c = anim.toC;
+                        this.spawnDustParticles(anim.endPos, 6);
+                        if (anim.onComplete) anim.onComplete();
+                        this.activeMoveAnimations.splice(i, 1);
+                    }
+                }
+
+                // Shatter Fragments Physics
+                const gravity = 12.5;
+                for (let i = this.shatterFragments.length - 1; i >= 0; i--) {
+                    const frag = this.shatterFragments[i];
+                    frag.vy -= gravity * dt;
+                    frag.mesh.position.x += frag.vx * dt;
+                    frag.mesh.position.y += frag.vy * dt;
+                    frag.mesh.position.z += frag.vz * dt;
+
+                    frag.mesh.rotation.x += frag.rx * dt;
+                    frag.mesh.rotation.y += frag.ry * dt;
+                    frag.mesh.rotation.z += frag.rz * dt;
+
+                    if (frag.mesh.position.y < this.boardY + 0.04) {
+                        frag.mesh.position.y = this.boardY + 0.04;
+                        frag.vy = -frag.vy * 0.42;
+                        frag.vx *= 0.72;
+                        frag.vz *= 0.72;
+                        frag.rx *= 0.65;
+                        frag.rz *= 0.65;
+                    }
+
+                    frag.life -= dt * 0.52;
+                    frag.mesh.material.opacity = Math.max(0, frag.life);
+
+                    if (frag.life <= 0) {
+                        this.scene.remove(frag.mesh);
+                        frag.mesh.geometry.dispose();
+                        frag.mesh.material.dispose();
+                        this.shatterFragments.splice(i, 1);
+                    }
+                }
+
+                // Dust Particles Update
+                for (let i = this.dustParticles.length - 1; i >= 0; i--) {
+                    const d = this.dustParticles[i];
+                    d.mesh.position.x += d.vx * dt;
+                    d.mesh.position.y += d.vy * dt;
+                    d.mesh.position.z += d.vz * dt;
+                    d.vy -= 1.8 * dt;
+                    d.life -= dt * 1.8;
+                    d.mesh.material.opacity = Math.max(0, d.life * 0.72);
+                    d.mesh.scale.setScalar(1 + (1 - d.life) * 1.5);
+
+                    if (d.life <= 0) {
+                        this.scene.remove(d.mesh);
+                        d.mesh.material.dispose();
+                        this.dustParticles.splice(i, 1);
+                    }
+                }
+
+                // Shockwaves Update
+                for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+                    const sw = this.shockwaves[i];
+                    sw.scale += dt * 7.5;
+                    sw.opacity -= dt * 2.2;
+                    sw.mesh.scale.setScalar(sw.scale);
+                    sw.mesh.material.opacity = Math.max(0, sw.opacity);
+                    if (sw.opacity <= 0) {
+                        this.scene.remove(sw.mesh);
+                        sw.mesh.geometry.dispose();
+                        sw.mesh.material.dispose();
+                        this.shockwaves.splice(i, 1);
+                    }
