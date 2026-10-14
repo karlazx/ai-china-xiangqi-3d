@@ -1123,3 +1123,81 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText(char, 256, 266);
             }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.anisotropy = 4;
+            pieceTextureCache.set(key, tex);
+            return tex;
+        }
+
+        // Stained Glass Rose Window Texture
+        function createRoseWindowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#1c150e';
+            ctx.fillRect(0, 0, 512, 512);
+
+            const cx = 256, cy = 256;
+            const colors = ['#dc2626', '#d97706', '#2563eb', '#7c3aed', '#059669', '#db2777'];
+
+            for (let i = 0; i < 12; i++) {
+                const a1 = (i / 12) * Math.PI * 2;
+                const a2 = ((i + 1) / 12) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, 232, a1, a2);
+                ctx.closePath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = '#241a10';
+                ctx.stroke();
+            }
+
+            [175, 115, 55].forEach((r) => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = '#241a10';
+                ctx.stroke();
+            });
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        /**************************************************************************
+         * 4. THREE.JS LUXURIOUS GOTHIC CATHEDRAL SCENE (Zero Flicker, Crisp Contrast)
+         **************************************************************************/
+        class CathedralXiangqiScene {
+            constructor(container, engine, onSquareClicked) {
+                this.container = container;
+                this.engine = engine;
+                this.onSquareClicked = onSquareClicked;
+
+                this.cellSize = 1.15;
+                this.boardY = 0.35; // Top surface of the Xiangqi board (well separated from altar at Y=0.0)
+
+                this.pieceMeshes = new Map();
+                this.validMoveIndicators = [];
+                this.activeMoveAnimations = [];
+                this.shatterFragments = [];
+                this.dustParticles = [];
+                this.shockwaves = [];
+                this.candles = [];
+                this.selectedPieceId = null;
+                this.cameraPresetIndex = 0;
+                this.cameraTransition = null;
+                this.cameraShake = 0;
+
+                this.initScene();
+                this.buildLuxuriousGothicCathedral();
+                this.buildAltarAndBoard();
+                this.buildSelectionAndMoveHelpers();
+                this.syncPiecesFromBoard();
+                this.setupInteraction();
+            }
+
+            initScene() {
