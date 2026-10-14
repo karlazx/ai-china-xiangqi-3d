@@ -1988,3 +1988,95 @@
                     });
                 }
             }
+
+            animateMove(move, result, onComplete) {
+                const mesh = this.pieceMeshes.get(result.piece.id);
+                if (!mesh) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                const startPos = this.boardToWorld(move.fromR, move.fromC);
+                const endPos = this.boardToWorld(move.toR, move.toC);
+
+                this.lastFromRing.position.set(startPos.x, this.boardY + 0.02, startPos.z);
+                this.lastFromRing.visible = true;
+                this.lastToRing.position.set(endPos.x, this.boardY + 0.02, endPos.z);
+                this.lastToRing.visible = true;
+
+                const isAttack = Boolean(result.captured);
+                if (isAttack) {
+                    sound.playAttackAndShatter();
+                } else {
+                    sound.playMove();
+                }
+
+                this.activeMoveAnimations.push({
+                    mesh,
+                    piece: result.piece,
+                    captured: result.captured,
+                    startPos,
+                    endPos,
+                    toR: move.toR,
+                    toC: move.toC,
+                    isAttack,
+                    shattered: false,
+                    elapsed: 0,
+                    duration: isAttack ? 0.52 : 0.36,
+                    onComplete
+                });
+            }
+
+            cycleCameraPreset() {
+                this.cameraPresetIndex = (this.cameraPresetIndex + 1) % 3;
+                const presets = [
+                    { name: '圣坛斜视', pos: new THREE.Vector3(0, 12.2, 11.4), target: new THREE.Vector3(0, 0.35, 0.35), autoRotate: false },
+                    { name: '垂直俯视', pos: new THREE.Vector3(0, 16.8, 0.01), target: new THREE.Vector3(0, 0.35, 0), autoRotate: false },
+                    { name: '圣殿全景', pos: new THREE.Vector3(10.5, 9.8, 12.2), target: new THREE.Vector3(0, 1.0, 0), autoRotate: true }
+                ];
+
+                const chosen = presets[this.cameraPresetIndex];
+                this.controls.autoRotate = chosen.autoRotate;
+                this.controls.autoRotateSpeed = 1.0;
+
+                this.cameraTransition = {
+                    startPos: this.camera.position.clone(),
+                    endPos: chosen.pos,
+                    startTarget: this.controls.target.clone(),
+                    endTarget: chosen.target,
+                    elapsed: 0,
+                    duration: 0.75
+                };
+
+                return chosen.name;
+            }
+
+            setupInteraction() {
+                this.raycaster = new THREE.Raycaster();
+                this.pointer = new THREE.Vector2();
+                this.boardPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this.boardY);
+
+                let downPos = { x: 0, y: 0 };
+                const dom = this.renderer.domElement;
+
+                dom.addEventListener('pointerdown', (e) => {
+                    downPos = { x: e.clientX, y: e.clientY };
+                });
+
+                dom.addEventListener('pointerup', (e) => {
+                    const dragDist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+                    if (dragDist > 8) return;
+
+                    const rect = dom.getBoundingClientRect();
+                    this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                    this.raycaster.setFromCamera(this.pointer, this.camera);
+
+                    const meshArray = Array.from(this.pieceMeshes.values());
+                    const hits = this.raycaster.intersectObjects(meshArray, true);
+                    if (hits.length > 0) {
+                        let obj = hits[0].object;
+                        while (obj.parent && !obj.userData.pieceId) {
+                            obj = obj.parent;
+                        }
