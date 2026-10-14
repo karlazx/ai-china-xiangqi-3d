@@ -1382,3 +1382,90 @@
                     sideWall.receiveShadow = true;
                     cathedralGroup.add(sideWall);
 
+                    // Golden Triforium Cornice Ledge
+                    const ledge = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 60), goldLeafMat);
+                    ledge.position.set(wallX > 0 ? wallX - 0.8 : wallX + 0.8, 10.2, 0);
+                    cathedralGroup.add(ledge);
+                });
+
+                // 5. Stained Glass Lancet Windows along Side Walls (No intrusive cones over the board!)
+                const windowColors = [0xd97706, 0xdc2626, 0x2563eb, 0x059669, 0x9333ea, 0xe11d48];
+                [-20, -12, -4, 4, 12, 20].forEach((z, idx) => {
+                    const col = windowColors[idx % windowColors.length];
+                    [-13.4, 13.4].forEach((wx) => {
+                        const winFrame = new THREE.Mesh(new THREE.BoxGeometry(0.25, 8.2, 2.8), carvedStoneMat);
+                        winFrame.position.set(wx, 15.2, z);
+                        cathedralGroup.add(winFrame);
+
+                        const glassMat = new THREE.MeshBasicMaterial({ color: col });
+                        const glass = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 7.6), glassMat);
+                        glass.position.set(wx > 0 ? wx - 0.15 : wx + 0.15, 15.2, z);
+                        glass.rotation.y = wx > 0 ? -Math.PI / 2 : Math.PI / 2;
+                        cathedralGroup.add(glass);
+                    });
+                });
+
+                // 6. North Apse Wall, Rose Window & Grand Gilded Pipe Organ
+                const apseWall = new THREE.Mesh(new THREE.BoxGeometry(32, 30, 1.5), limestoneMat);
+                apseWall.position.set(0, 12, -27);
+                cathedralGroup.add(apseWall);
+
+                const roseTex = createRoseWindowTexture();
+                const roseMesh = new THREE.Mesh(
+                    new THREE.CircleGeometry(5.6, 36),
+                    new THREE.MeshBasicMaterial({ map: roseTex })
+                );
+                roseMesh.position.set(0, 16.2, -26.1);
+                cathedralGroup.add(roseMesh);
+
+                const roseRim = new THREE.Mesh(new THREE.TorusGeometry(5.7, 0.35, 12, 48), goldLeafMat);
+                roseRim.position.set(0, 16.2, -26.05);
+                cathedralGroup.add(roseRim);
+
+                // Grand Gilded Pipe Organ below Rose Window
+                const organCase = new THREE.Mesh(new THREE.BoxGeometry(11.5, 5.5, 1.8), carvedStoneMat);
+                organCase.position.set(0, 4.2, -25.6);
+                cathedralGroup.add(organCase);
+
+                for (let i = -9; i <= 9; i++) {
+                    const h = 6.2 - Math.abs(i) * 0.26 + (i % 2 === 0 ? 0.4 : 0);
+                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, h, 12), goldLeafMat);
+                    pipe.position.set(i * 0.54, 4.8 + h / 2, -24.55);
+                    cathedralGroup.add(pipe);
+                }
+
+                // 7. Four Golden Wheel Chandeliers (Corona Lucis) hanging in the Nave
+                [-14, -5, 5, 14].forEach((cz) => {
+                    [-6.5, 6.5].forEach((cx) => {
+                        const chand = new THREE.Group();
+                        chand.position.set(cx, 13.5, cz);
+
+                        const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 10, 8), goldLeafMat);
+                        chain.position.y = 5.0;
+                        chand.add(chain);
+
+                        const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.08, 10, 24), goldLeafMat);
+                        wheel.rotation.x = Math.PI / 2;
+                        chand.add(wheel);
+
+                        cathedralGroup.add(chand);
+                    });
+                });
+
+                this.scene.add(cathedralGroup);
+            }
+
+            // Strictly Separated Y-Heights + PolygonOffset to Guarantee Zero Z-Fighting in All Camera Modes
+            buildAltarAndBoard() {
+                const creamMarbleMat = new THREE.MeshStandardMaterial({
+                    color: 0xe6dac6,
+                    roughness: 0.32,
+                    metalness: 0.08
+                });
+
+                const redVeronaMat = new THREE.MeshStandardMaterial({
+                    color: 0x8a3028,
+                    roughness: 0.36,
+                    metalness: 0.1
+                });
+
