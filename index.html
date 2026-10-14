@@ -1301,3 +1301,84 @@
                     metalness: 0.1
                 });
 
+                const cathedralGroup = new THREE.Group();
+
+                // 1. Ornate Inlaid Marble Floor at Y = -2.45 (Strictly separated from steps to prevent Z-fighting)
+                const floorTex = createCathedralFloorTexture();
+                const floorMat = new THREE.MeshStandardMaterial({
+                    map: floorTex,
+                    roughness: 0.4,
+                    metalness: 0.1
+                });
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(84, 84), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -2.45;
+                floor.receiveShadow = true;
+                cathedralGroup.add(floor);
+
+                // 2. Royal Ultramarine Starry Vault Ceiling at Y = 23.5
+                const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(36, 72), royalVaultMat);
+                ceiling.rotation.x = Math.PI / 2;
+                ceiling.position.y = 23.5;
+                cathedralGroup.add(ceiling);
+
+                // 3. Nave Clustered Marble Columns, Triforium Gallery & Ribbed Vault Arches
+                const zBays = [-24, -16, -8, 0, 8, 16, 24];
+                zBays.forEach((z) => {
+                    [-12.5, 12.5].forEach((x) => {
+                        const colGroup = new THREE.Group();
+                        colGroup.position.set(x, -2.45, z);
+
+                        // Stepped Red Marble Octagonal Plinth Base
+                        const base1 = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.6, 0.7, 8), redMarbleMat);
+                        base1.position.y = 0.35;
+                        colGroup.add(base1);
+
+                        const baseRing = new THREE.Mesh(new THREE.TorusGeometry(1.38, 0.07, 10, 24), goldLeafMat);
+                        baseRing.rotation.x = Math.PI / 2;
+                        baseRing.position.y = 0.72;
+                        colGroup.add(baseRing);
+
+                        // Limestone Core Shaft
+                        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.05, 24, 16), limestoneMat);
+                        core.position.y = 12.5;
+                        core.castShadow = true;
+                        core.receiveShadow = true;
+                        colGroup.add(core);
+
+                        // 4 Attached Slender Colonnettes with Gold Banding
+                        for (let a = 0; a < 4; a++) {
+                            const ang = (a * Math.PI) / 2 + Math.PI / 4;
+                            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 24, 10), carvedStoneMat);
+                            shaft.position.set(Math.cos(ang) * 0.88, 12.5, Math.sin(ang) * 0.88);
+                            colGroup.add(shaft);
+                        }
+
+                        // Gilded Corinthian Capital at top of shaft
+                        const capital = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.0, 1.1, 8), goldLeafMat);
+                        capital.position.y = 24.2;
+                        colGroup.add(capital);
+
+                        cathedralGroup.add(colGroup);
+                    });
+
+                    // Transverse Vault Rib & Golden Keystone Boss
+                    const vaultArch = new THREE.Mesh(
+                        new THREE.TorusGeometry(12.5, 0.32, 10, 36, Math.PI),
+                        carvedStoneMat
+                    );
+                    vaultArch.position.set(0, 11.0, z);
+                    cathedralGroup.add(vaultArch);
+
+                    const keystone = new THREE.Mesh(new THREE.OctahedronGeometry(0.65, 0), goldLeafMat);
+                    keystone.position.set(0, 23.3, z);
+                    cathedralGroup.add(keystone);
+                });
+
+                // 4. Side Enclosure Walls & Triforium Cornices
+                [-14.2, 14.2].forEach((wallX) => {
+                    const sideWall = new THREE.Mesh(new THREE.BoxGeometry(1.2, 28, 64), limestoneMat);
+                    sideWall.position.set(wallX, 11, 0);
+                    sideWall.receiveShadow = true;
+                    cathedralGroup.add(sideWall);
+
