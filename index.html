@@ -2419,3 +2419,90 @@
             btnMode.addEventListener('click', () => {
                 if (isBusy) return;
                 vsAI = !vsAI;
+                if (vsAI) {
+                    btnMode.classList.add('active');
+                    iconMode.textContent = 'smart_toy';
+                    labelMode.textContent = '人机对战 (AI)';
+                    showToast('已切换至：人机对战 (执红先行)', 'smart_toy');
+                    if (!engine.gameOver && engine.turn === BLACK) {
+                        isBusy = true;
+                        updateStatusUI();
+                        setTimeout(() => {
+                            const aiMove = engine.computeBestMove(3);
+                            if (aiMove) {
+                                const aiResult = engine.makeMove(aiMove);
+                                scene3D.animateMove(aiMove, aiResult, () => {
+                                    isBusy = false;
+                                    updateStatusUI(aiResult.inCheck);
+                                });
+                            } else {
+                                isBusy = false;
+                            }
+                        }, 200);
+                    }
+                } else {
+                    btnMode.classList.remove('active');
+                    iconMode.textContent = 'group';
+                    labelMode.textContent = '双人同屏 (2P)';
+                    showToast('已切换至：双人同屏对弈', 'group');
+                }
+                updateStatusUI(engine.isInCheck(engine.turn));
+            });
+
+            btnCamera.addEventListener('click', () => {
+                const presetName = scene3D.cycleCameraPreset();
+                labelCamera.textContent = presetName;
+                sound.playSelect();
+            });
+
+            btnUndo.addEventListener('click', () => {
+                if (isBusy || engine.history.length === 0) return;
+                scene3D.clearSelection();
+
+                if (vsAI && engine.turn === RED && engine.history.length >= 2) {
+                    engine.undoLastMove();
+                    engine.undoLastMove();
+                } else {
+                    engine.undoLastMove();
+                }
+
+                scene3D.syncPiecesFromBoard();
+                scene3D.lastFromRing.visible = false;
+                scene3D.lastToRing.visible = false;
+                sound.playSelect();
+                updateStatusUI(engine.isInCheck(engine.turn));
+                showToast('已悔棋', 'undo', 1600);
+            });
+
+            btnNew.addEventListener('click', () => {
+                if (isBusy) return;
+                engine.reset();
+                scene3D.clearSelection();
+                scene3D.lastFromRing.visible = false;
+                scene3D.lastToRing.visible = false;
+                scene3D.syncPiecesFromBoard();
+                sound.playCathedralBell(false);
+                updateStatusUI(false);
+                showToast('新局开启 · 红方先行', 'restart_alt', 2000);
+            });
+
+            btnSound.addEventListener('click', () => {
+                const enabled = sound.toggle();
+                btnSound.classList.toggle('active', enabled);
+                iconSound.textContent = enabled ? 'volume_up' : 'volume_off';
+            });
+
+            updateStatusUI(false);
+
+            const clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const dt = Math.min(clock.getDelta(), 0.1);
+                const elapsed = clock.getElapsedTime();
+                scene3D.update(dt, elapsed);
+            }
+            animate();
+        };
+    </script>
+</body>
+</html>
