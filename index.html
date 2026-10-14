@@ -1558,3 +1558,92 @@
                     const cGroup = new THREE.Group();
                     cGroup.position.set(cx, 0.0, cz);
 
+                    const holder = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.48, 0.24, 16), brassMat);
+                    holder.position.y = 0.12;
+                    cGroup.add(holder);
+
+                    const h = 0.85 + (idx % 2) * 0.2;
+                    const wax = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.22, 0.24, h, 16),
+                        new THREE.MeshStandardMaterial({ color: 0xf5ead6, roughness: 0.5 })
+                    );
+                    wax.position.y = 0.24 + h / 2;
+                    wax.castShadow = true;
+                    cGroup.add(wax);
+
+                    const flame = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.08, 0.26, 10),
+                        new THREE.MeshBasicMaterial({ color: 0xffa726 })
+                    );
+                    flame.position.y = 0.24 + h + 0.14;
+                    cGroup.add(flame);
+
+                    this.scene.add(cGroup);
+                    this.candles.push({ flame, baseY: 0.24 + h + 0.14, phase: idx * 1.5 });
+                });
+            }
+
+            boardToWorld(r, c) {
+                const x = (c - 4) * this.cellSize;
+                const z = (r - 4.5) * this.cellSize;
+                return new THREE.Vector3(x, this.boardY, z);
+            }
+
+            worldToBoard(point) {
+                const c = Math.round(point.x / this.cellSize + 4);
+                const r = Math.round(point.z / this.cellSize + 4.5);
+                if (r >= 0 && r < 10 && c >= 0 && c < 9) {
+                    const intersection = this.boardToWorld(r, c);
+                    const dist = Math.hypot(point.x - intersection.x, point.z - intersection.z);
+                    if (dist <= this.cellSize * 0.48) {
+                        return { r, c };
+                    }
+                }
+                return null;
+            }
+
+            // High-Contrast 3D Pieces: Imperial Crimson-Gold Marble vs Volcanic Obsidian
+            createPieceMesh(piece) {
+                const group = new THREE.Group();
+                group.userData = { pieceId: piece.id, type: piece.type, color: piece.color };
+
+                const isRed = piece.color === RED;
+
+                // Red pieces have a warm rose-terracotta & cream marble body so they stand out clearly against the board
+                const bodyMat = isRed
+                    ? new THREE.MeshPhysicalMaterial({
+                        color: 0xd99b82,
+                        roughness: 0.22,
+                        metalness: 0.08,
+                        clearcoat: 0.65,
+                        clearcoatRoughness: 0.18
+                    })
+                    : new THREE.MeshPhysicalMaterial({
+                        color: 0x141821,
+                        roughness: 0.16,
+                        metalness: 0.25,
+                        clearcoat: 0.85,
+                        clearcoatRoughness: 0.1
+                    });
+
+                // Deep Crimson-Bronze Rim for Red vs Glowing Cyan-Gold Rim for Black
+                const accentMat = isRed
+                    ? new THREE.MeshStandardMaterial({
+                        color: 0x991b1b,
+                        roughness: 0.28,
+                        metalness: 0.65
+                    })
+                    : new THREE.MeshStandardMaterial({
+                        color: 0x38bdf8,
+                        emissive: 0x0284c7,
+                        emissiveIntensity: 0.35,
+                        roughness: 0.22,
+                        metalness: 0.75
+                    });
+
+                const goldTrimMat = new THREE.MeshStandardMaterial({
+                    color: 0xc89332,
+                    roughness: 0.25,
+                    metalness: 0.85
+                });
+
